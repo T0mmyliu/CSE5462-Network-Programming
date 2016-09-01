@@ -1,0 +1,24 @@
+$ count example1 "Sly Fox" example1out       
+Size of file is 8289
+Number of matches = 25
+$ count example1 the example1out
+Size of file is 8289
+Number of matches = 115
+$ count example2 tomato example2out
+Size of file is 49
+Number of matches = 6
+$ count example2 potato example2out
+Size of file is 49
+Number of matches = 3
+$ count example3 the out5
+Size of file is 4376
+Number of matches = 50
+$ count example3 "I want" out6
+Size of file is 4376
+Number of matches = 1
+$ count example3 "I want to" out7
+Size of file is 4376
+Number of matches = 0
+$ count example4 $'f\xA' out8
+Size of file is 5
+Number of matches = 1
