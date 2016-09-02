@@ -1,0 +1,6 @@
+How to compile: 
+just type "make" in your terminal.
+
+How to run:
+You will run the program using the following command:
+./count <input-filename> <search-string> <output-filename> 
