@@ -1,0 +1,10 @@
+Simple file transfer application using TCP sockets. 
+The file-transfer protocol will include a server called ftps and a client called ftpc. 
+
+Usage:
+    Start the server using the command 
+        ftps <local-port>
+    Then start ftpc with the command
+        ftpc <remote-IP> <remote-port> <local-file-to-transfer>
+
+    The new file created by ftps has the same name but it is in a sub-directory called ”recvd”
