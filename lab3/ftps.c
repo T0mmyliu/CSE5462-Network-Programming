@@ -45,7 +45,6 @@ int main(int argc,char* argv[])
         printf("serveing...\n");
         cli_len = sizeof(cli_addr);
         process_request(listen_sock);
-        close(conn_sock);
     }
 }
 
@@ -64,20 +63,19 @@ int process_request(int conn_sock)
     bzero(rec_name,sizeof(rec_name));
 
     //read the first four byte: file_len in network order.
-    rec_len=0;
-    while(rec_len!=4){
-        int tmp=0;
-        if((tmp=RECV(conn_sock,(void*)(&file_len),4,MSG_WAITALL))<0){
-            printf("Error reading on stream socket, the recv size is %d.1st\n",tmp);
-            exit(0);
-        }
-        printf("read %d byte\n",tmp);
-        rec_len+=tmp;
-        printf("rec_len %d byte\n",rec_len);
-    }
-    file_len=ntohl(file_len);
+    
 
-    printf("Server receives file length: %d\n",file_len);
+    rec_len = RECV(conn_sock,buf,4,MSG_WAITALL);
+    printf("bytes in: %d %s\n",rec_len,buf);	
+    if(rec_len < 0){
+        perror("Error reading from socket!1st");
+	exit(1);
+    }
+    file_len=0;
+    memcpy(&file_len,buf,4);	
+    file_len = file_len;
+    printf("The size of the file is: %d bytes.\n",file_len);
+
 
     //read the following 25 byte: file_name.
     rec_len=0;
@@ -99,7 +97,7 @@ int process_request(int conn_sock)
         perror("error create receive file.");
     }
     
-    left_len=file_len;
+    left_len=ntohl(file_len);
     
     //write data to recvd_file
     fp=fopen(rec_name,"a");
@@ -114,8 +112,6 @@ int process_request(int conn_sock)
             perror("error happen when writing the data.");
         }
     }
-
-    close(conn_sock);
     
     return 0;
 }

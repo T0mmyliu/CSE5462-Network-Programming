@@ -8,12 +8,18 @@
 
 #include "address.h"
 
+typedef struct TrollHeader{
+    struct sockaddr_in header;
+    char body[1000];
+}TrollHeader;
+
 int main(int argc, char* argv[])
 {
     struct sockaddr_in local_addr,remote_addr,troll_addr,server_addr,client_addr;
     int sock_local,sock_remote;
     char buffer_local[1000],buffer_remote[1000];
     fd_set readfds;
+    TrollHeader head;
 
     if(argc!=1){
         printf("Error, the usage is: \"./tcpd\"\n");
@@ -44,6 +50,10 @@ int main(int argc, char* argv[])
     server_addr.sin_family=AF_INET;
     server_addr.sin_port=htons(SERVER_PORT);
     server_addr.sin_addr.s_addr=inet_addr(SERVER_IP);
+
+    head.header.sin_family = htons(AF_INET);
+    head.header.sin_addr.s_addr = inet_addr(SERVER_IP);
+    head.header.sin_port = htons(REMOTE_PORT);
 
     if(bind(sock_local,(struct sockaddr*)&local_addr,sizeof(local_addr))<0){
         perror("local bind");
@@ -85,14 +95,15 @@ int main(int argc, char* argv[])
 
             printf("Bytes from client :%d\n",bytes);
             
-            bytes=sendto(sock_remote,buffer_local,sizeof(buffer_local),0,
+            memcpy(&head.body,&buffer_local,1000);
+            bytes=sendto(sock_local,(char*)&head,sizeof(head.header)+bytes,0,
                     (struct sockaddr*)&troll_addr,sizeof(troll_addr));
             
             printf("Send to Troll: %d.\n",bytes);
         }
 
         if(FD_ISSET(sock_remote,&readfds)){
-             bzero(&buffer_local,sizeof(buffer_remote));
+             bzero(&buffer_remote,sizeof(buffer_remote));
               
              int bytes;
              socklen_t len=sizeof(remote_addr);
@@ -105,7 +116,7 @@ int main(int argc, char* argv[])
                                                              
              printf("Bytes from troll :%d\n",bytes);
                                                                                
-             bytes=sendto(sock_remote,buffer_remote,sizeof(buffer_remote),0,
+             bytes=sendto(sock_remote,buffer_remote+16,bytes-16,0,
              (struct sockaddr*)&server_addr,sizeof(server_addr));
                                                                                             
              printf("Send to server: %d.\n",bytes);
