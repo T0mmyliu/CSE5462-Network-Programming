@@ -94,11 +94,12 @@ int main(int argc, char *argv[])
 
     /* write buf to sock */
     net_order_len=htonl(finfo.len);
-    if(SEND(sock,(char*)(&net_order_len), 4, 0) < 0) {
+    int send_bytes;
+    if((send_bytes=SEND(sock,(char*)(&net_order_len), 4, 0)) < 0) {
         perror("error writing on stream socket");
         exit(1);
     }
-    printf("Client sends the file len: %d\n", finfo.len);
+    printf("The sended bytes is %d.\nClient sends the file len: %d\n",send_bytes, finfo.len);
 
     if(SEND(sock, finfo.file_name, 25, 0) < 0) {
         perror("error writing on stream socket");

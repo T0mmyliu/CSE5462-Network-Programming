@@ -41,6 +41,10 @@ int main(int argc, char* argv[])
     troll_addr.sin_port=htons(TROLL_PORT);
     troll_addr.sin_addr.s_addr=inet_addr(CLIENT_IP);
 
+    server_addr.sin_family=AF_INET;
+    server_addr.sin_port=htons(SERVER_PORT);
+    server_addr.sin_addr.s_addr=inet_addr(SERVER_IP);
+
     if(bind(sock_local,(struct sockaddr*)&local_addr,sizeof(local_addr))<0){
         perror("local bind");
     }
@@ -49,14 +53,23 @@ int main(int argc, char* argv[])
         perror("remote bind");
     }
 
-    FD_ZERO(&readfds);
-    FD_SET(sock_local,&readfds);
-    FD_SET(sock_remote,&readfds);
+
 
     while(1){
-        if(select(2,&readfds,NULL,NULL,NULL)==-1){
-            perror("select()");
+    	FD_ZERO(&readfds);
+    	FD_SET(sock_local,&readfds);
+    	FD_SET(sock_remote,&readfds);
+        printf("waiting for a packet.\n");
+        //bzero(&buffer_local,sizeof(buffer_local));
+	//socklen_t len=0;
+	//recvfrom(sock_local,buffer_local,sizeof(buffer_local),MSG_WAITALL,
+                    //(struct sockaddr*)&local_addr,&len);
+	//printf("%s\n",buffer_local);
+
+        if(select(FD_SETSIZE,&readfds,NULL,NULL,NULL)){
         }
+        
+        printf("One packet comes.\n");
 
         if(FD_ISSET(sock_local,&readfds)){
             bzero(&buffer_local,sizeof(buffer_local));
@@ -97,10 +110,6 @@ int main(int argc, char* argv[])
                                                                                             
              printf("Send to server: %d.\n",bytes);
         }
-
-        FD_ZERO(&readfds);
-        FD_SET(sock_remote,&readfds);
-        FD_SET(sock_remote,&readfds);
     }
     
     return 0;
