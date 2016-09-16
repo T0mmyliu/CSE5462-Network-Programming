@@ -73,7 +73,7 @@ int process_request(int conn_sock)
     }
     file_len=0;
     memcpy(&file_len,buf,4);	
-    file_len = file_len;
+    file_len = ntohl(file_len);
     printf("The size of the file is: %d bytes.\n",file_len);
 
 
@@ -97,7 +97,7 @@ int process_request(int conn_sock)
         perror("error create receive file.");
     }
     
-    left_len=ntohl(file_len);
+    left_len=file_len;
     
     //write data to recvd_file
     fp=fopen(rec_name,"a");
@@ -107,10 +107,8 @@ int process_request(int conn_sock)
             perror("error happen in receive.");
         }
         left_len-=rec_len;
-        
-        if((fwrite(buf,sizeof(char),rec_len,fp))!=rec_len){
-            perror("error happen when writing the data.");
-        }
+        fwrite(buf,sizeof(char),rec_len,fp);
+        fflush(fp);
     }
     
     return 0;

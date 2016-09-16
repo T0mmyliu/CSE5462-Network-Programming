@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     int left_len=finfo.len;
     while(left_len!=0){
         int read_len=0;
-        char read_buf[1000]={0};
+        char read_buf[800]={0};
         if((read_len=fread(read_buf,sizeof(char),sizeof(read_buf),finfo.fp))<0){
             perror("error reading the file");
         }

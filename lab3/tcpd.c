@@ -10,7 +10,7 @@
 
 typedef struct TrollHeader{
     struct sockaddr_in header;
-    char body[1000];
+    char body[800];
 }TrollHeader;
 
 int main(int argc, char* argv[])
@@ -70,11 +70,6 @@ int main(int argc, char* argv[])
     	FD_SET(sock_local,&readfds);
     	FD_SET(sock_remote,&readfds);
         printf("waiting for a packet.\n");
-        //bzero(&buffer_local,sizeof(buffer_local));
-	//socklen_t len=0;
-	//recvfrom(sock_local,buffer_local,sizeof(buffer_local),MSG_WAITALL,
-                    //(struct sockaddr*)&local_addr,&len);
-	//printf("%s\n",buffer_local);
 
         if(select(FD_SETSIZE,&readfds,NULL,NULL,NULL)){
         }
@@ -95,7 +90,7 @@ int main(int argc, char* argv[])
 
             printf("Bytes from client :%d\n",bytes);
             
-            memcpy(&head.body,&buffer_local,1000);
+            memcpy(&head.body,&buffer_local,800);
             bytes=sendto(sock_local,(char*)&head,sizeof(head.header)+bytes,0,
                     (struct sockaddr*)&troll_addr,sizeof(troll_addr));
             
