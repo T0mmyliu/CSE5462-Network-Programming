@@ -151,10 +151,10 @@ int main()
         //TODO: There is a bug, if add the following line will be loop forever.
         //close(pipefd[0]); /* Close unused read end */
         start_timer(pipefd[1], 5.0, 1);
-        start_timer(pipefd[1], 6.0, 2);
-        start_timer(pipefd[1], 7.0, 3);
+        start_timer(pipefd[1], 6.1, 2);
+        start_timer(pipefd[1], 7.2, 3);
         sleep(2);
-        start_timer(pipefd[1], 10.0, 4);
+        start_timer(pipefd[1], 10.3, 4);
         sleep(2);
         cancel_timer(pipefd[1], 1);
         sleep(2);
@@ -174,8 +174,8 @@ void print_time_node(time_node *node)
     printf("The id is: %d\n", node->id);
     struct tm *time;
     time = localtime(&node->expire_time.tv_sec);
-    printf("The current local time is %d-%d-%d %d:%d:%d.%ld\n", 1900 + time->tm_year, time->tm_mon + 1, time->tm_mday,
-           time->tm_hour, time->tm_min, time->tm_sec, node->expire_time.tv_usec);
+    printf("The current local time is %d-%d-%d %d:%d:%d %f\n", 1900 + time->tm_year, time->tm_mon + 1, time->tm_mday,
+           time->tm_hour, time->tm_min, time->tm_sec, (double)node->expire_time.tv_usec/1000.0);
     print_time_node(node->next_node);
 }
 
@@ -226,7 +226,7 @@ time_node *insert(time_node *head, double expire_time, int id)
     node_to_add->next_node = NULL;
 
     delta_time.tv_sec = (time_t)expire_time;
-    delta_time.tv_usec = (suseconds_t)expire_time - (time_t)expire_time;
+    delta_time.tv_usec = (expire_time - (time_t)expire_time)*1000;
     curtime = get_current_time();
 
     timeradd(&delta_time, &curtime, &(node_to_add->expire_time));
