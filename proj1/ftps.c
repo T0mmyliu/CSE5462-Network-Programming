@@ -68,7 +68,7 @@ int process_request(int conn_sock)
     //read the first four byte: file_len in network order.
 
     rec_len = RECV(conn_sock, buf, 4, MSG_WAITALL);
-    printf("bytes in: %d %s\n", rec_len, buf);
+    printf("the file length is %s, recv length is %d\n", buf, rec_len);
     if (rec_len < 0)
     {
         perror("Error reading from socket!1st");
@@ -76,7 +76,6 @@ int process_request(int conn_sock)
     }
     file_len = 0;
     memcpy(&file_len, buf, 4);
-    file_len = ntohl(file_len);
     printf("The size of the file is: %d bytes.\n", file_len);
 
     //read the following 25 byte: file_name.
@@ -102,21 +101,26 @@ int process_request(int conn_sock)
         perror("error create receive file.");
     }
 
+    printf("Server saved file name: %s\n", rec_name);
+
     left_len = file_len;
 
     //write data to recvd_file
     fp = fopen(rec_name, "a");
-    while (left_len != 0)
+    while (left_len > 0)
     {
         bzero(buf, sizeof(buf));
         if ((rec_len = RECV(conn_sock, buf, sizeof(buf), MSG_WAITALL)) < 0)
         {
             perror("error happen in receive.");
         }
+        printf("read %d byte\n", rec_len);
         left_len -= rec_len;
+        printf("left_len %d byte\n", left_len);
         fwrite(buf, sizeof(char), rec_len, fp);
         fflush(fp);
     }
+    fclose(fp);
 
     return 0;
 }

@@ -101,9 +101,8 @@ int main(int argc, char *argv[])
     }
 
     /* write buf to sock */
-    net_order_len = htonl(finfo.len);
     int send_bytes;
-    if ((send_bytes = SEND(sock, (char *)(&net_order_len), 4, 0)) < 0)
+    if ((send_bytes = SEND(sock, (char *)(&finfo.len), 4, 0)) < 0)
     {
         perror("error writing on stream socket");
         exit(1);
@@ -118,7 +117,7 @@ int main(int argc, char *argv[])
     printf("Client sends the file name: %s\n", finfo.file_name);
 
     int left_len = finfo.len;
-    while (left_len != 0)
+    while (left_len > 0)
     {
         int read_len = 0;
         char read_buf[800] = {0};
@@ -133,7 +132,6 @@ int main(int argc, char *argv[])
             perror("error writing on stream socket");
             exit(1);
         }
-        sleep(3);
     }
     printf("Finish sending the file.\n");
 

@@ -30,7 +30,7 @@ int SOCKET(int domain,int type,int protocol){
 }
 
 ssize_t SEND(int socket,const void *buffer,size_t length,int flags){
-    usleep(10000); 
+    //usleep(200000); 
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;
     sock_addr.sin_port = htons(LOCAL_PORT);

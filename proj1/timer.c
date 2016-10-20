@@ -1,85 +1,20 @@
-#include <time.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/select.h>
-#include <string.h>
+#include "timer.h"
 
-#define timercmp(a, b, CMP) \
-    (((a)->tv_sec == (b)->tv_sec) ? ((a)->tv_usec CMP(b)->tv_usec) : ((a)->tv_sec CMP(b)->tv_sec))
+extern int pipefd[2];
+extern int pipefd_from_timer[2];
 
-#define timeradd(a, b, result)                           \
-    do                                                   \
-    {                                                    \
-        (result)->tv_sec = (a)->tv_sec + (b)->tv_sec;    \
-        (result)->tv_usec = (a)->tv_usec + (b)->tv_usec; \
-        if ((result)->tv_usec >= 1000000)                \
-        {                                                \
-            ++(result)->tv_sec;                          \
-            (result)->tv_usec -= 1000000;                \
-        }                                                \
-    } while (0)
-
-#define COMMAND_SIZE 40
-
-typedef struct time_node
+int timer_process_start()
 {
-    int id;
-    struct timeval expire_time;
-    struct time_node *next_node;
-} time_node;
-
-typedef struct cancel_args
-{
-    char command;
-    int id;
-} cancel_args;
-
-typedef struct start_args
-{
-    char command;
-    int id;
-    double expire_time;
-} start_args;
-
-typedef struct stop_args
-{
-    char command;
-} stop_args;
-
-//Follows are help function
-struct timeval get_current_time();
-
-//Follows are timer function
-time_node *insert(time_node *head, double expire_time, int id);
-time_node *delele(time_node *head, int id);
-time_node *update(time_node *head);
-void delete_all(time_node *head);
-void print_time_node(time_node *node);
-
-//Follows are driver function
-void start_timer(int fd, double expire_time, int id);
-void cancel_timer(int fd, int id);
-void stop_timer(int fd);
-
-int main()
-{
-    int pipefd[2];
+    printf("start timer process.\n");
     pid_t cpid;
-    int result;
     fd_set rfds;
     struct timeval tv;
     int retval;
     char buf[COMMAND_SIZE];
     char command;
-    struct timeval current_time, past_time;
     time_node *head;
-
-    if (pipe(pipefd) == -1)
-    {
-        perror("pipe");
-        exit(EXIT_FAILURE);
-    }
+    start_args *sargs;
+    cancel_args *cargs;
 
     cpid = fork();
     if (cpid == -1)
@@ -99,17 +34,21 @@ int main()
         {
             FD_ZERO(&rfds);
             FD_SET(pipefd[0], &rfds);
+
             /* Wait up to five seconds. */
-            tv.tv_sec = 5;
-            tv.tv_usec = 0;
+            tv.tv_sec = 0;
+            tv.tv_usec = 1000;
 
             retval = select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
             head = update(head);
-            current_time = get_current_time();
 
             if (retval == -1)
             {
                 perror("select()");
+            }
+            else if (retval == 0)
+            {
+                continue;
             }
             else if (retval)
             {
@@ -118,15 +57,15 @@ int main()
                 switch (command)
                 {
                 case 's': //start a new timer
-                    printf("\nCommand = \'s\'\n");
-                    start_args *sargs = (start_args *)buf;
+                    //printf("\nCommand = \'s\'\n");
+                    sargs = (start_args *)buf;
                     head = insert(head, sargs->expire_time, sargs->id);
                     printf("******after insert*****\n");
                     print_time_node(head);
                     break;
                 case 'c': //cancel a timer
-                    printf("\nCommand = \'c\'\n");
-                    cancel_args *cargs = (cancel_args *)buf;
+                    //printf("\nCommand = \'c\'\n");
+                    cargs = (cancel_args *)buf;
                     head = delele(head, cargs->id);
                     printf("******after delect*****\n");
                     print_time_node(head);
@@ -136,7 +75,6 @@ int main()
                     delete_all(head);
                     exit(0);
                 }
-                //printf("Recv : command=%c  id=%d\n", args.command, args.id);
             }
             else
             {
@@ -148,8 +86,10 @@ int main()
     }
     else
     {
-        //TODO: There is a bug, if add the following line will be loop forever.
-        //close(pipefd[0]); /* Close unused read end */
+        //To disable the driver.
+        exit(EXIT_SUCCESS);
+
+        //driver: to test the timer
         start_timer(pipefd[1], 5.0, 1);
         start_timer(pipefd[1], 6.1, 2);
         start_timer(pipefd[1], 7.2, 3);
@@ -163,6 +103,7 @@ int main()
         wait(NULL);       /* Wait for child */
         exit(EXIT_SUCCESS);
     }
+    return 0;
 }
 
 void print_time_node(time_node *node)
@@ -174,20 +115,26 @@ void print_time_node(time_node *node)
     printf("The id is: %d\n", node->id);
     struct tm *time;
     time = localtime(&node->expire_time.tv_sec);
-    printf("The current local time is %d-%d-%d %d:%d:%d %f\n", 1900 + time->tm_year, time->tm_mon + 1, time->tm_mday,
-           time->tm_hour, time->tm_min, time->tm_sec, (double)node->expire_time.tv_usec/1000.0);
+    //printf("The current local time is %d-%d-%d %d:%d:%d %f\n", 1900 + time->tm_year, time->tm_mon + 1, time->tm_mday,
+    //       time->tm_hour, time->tm_min, time->tm_sec, (double)node->expire_time.tv_usec / 1000000.0);
     print_time_node(node->next_node);
+    return;
 }
 
 struct timeval get_current_time()
 {
     struct timeval curtime;
-    struct tm *time;
     gettimeofday(&curtime.tv_sec, &curtime.tv_usec);
-    time = localtime(&curtime.tv_sec);
-    //printf("The current local time is %d-%d-%d %d:%d:%d.%ld\n", 1900 + time->tm_year, time->tm_mon + 1, time->tm_mday,
-    //      time->tm_hour, time->tm_min, time->tm_sec, curtime.tv_usec);
     return curtime;
+}
+
+void send_to_timer(int RTO, int seq)
+{
+    printf("\n");
+    start_timer(pipefd[1], RTO, seq);
+    printf("\n");
+
+    return;
 }
 
 void start_timer(int fd, double expire_time, int id)
@@ -198,6 +145,14 @@ void start_timer(int fd, double expire_time, int id)
     args.command = 's';
     //printf("Send : command=%c  id=%d  time is%lf\n", args.command, args.id, args.expire_time);
     write(fd, (void *)&args, COMMAND_SIZE);
+    return;
+}
+
+void delete_from_timer(int seq)
+{
+    printf("ack: %d \n",seq);
+    cancel_timer(pipefd[1], seq);
+    return;
 }
 
 void cancel_timer(int fd, int id)
@@ -207,6 +162,7 @@ void cancel_timer(int fd, int id)
     args.command = 'c';
     //printf("Send : command=%c  id=%d\n", args.command, args.id);
     write(fd, (void *)&args, COMMAND_SIZE);
+    return;
 }
 
 void stop_timer(int fd)
@@ -215,18 +171,19 @@ void stop_timer(int fd)
     args.command = 'q';
     //printf("Send : command=%c\n", args.command);
     write(fd, (void *)&args, COMMAND_SIZE);
+    return;
 }
 
 time_node *insert(time_node *head, double expire_time, int id)
 {
-    struct timeval delta_time, curtime, *res;
+    struct timeval delta_time, curtime;
 
     time_node *node_to_add = (time_node *)malloc(sizeof(time_node));
     node_to_add->id = id;
     node_to_add->next_node = NULL;
 
     delta_time.tv_sec = (time_t)expire_time;
-    delta_time.tv_usec = (expire_time - (time_t)expire_time)*1000;
+    delta_time.tv_usec = (expire_time - (time_t)expire_time) * 1000;
     curtime = get_current_time();
 
     timeradd(&delta_time, &curtime, &(node_to_add->expire_time));
@@ -269,11 +226,8 @@ time_node *delele(time_node *head, int id)
         p = p->next_node;
     }
 
-    if (p->next_node == NULL)
-    {
-        printf("Didnot find the id , delect Fail.\n");
-        return prenode.next_node;
-    }
+    printf("Didnot find the id:  %d, delect Fail.\n",id);
+    return prenode.next_node;
 }
 
 void delete_all(time_node *head)
@@ -287,6 +241,7 @@ void delete_all(time_node *head)
     head = head->next_node;
     free(tmp);
     delete_all(head);
+    return;
 }
 
 time_node *update(time_node *head)
@@ -299,6 +254,7 @@ time_node *update(time_node *head)
         {
             break;
         }
+        //TODO: SHOULD DELETE THE NODE AND SEND BACK TO TCPD TO RECEND.
         head = head->next_node;
     }
     return head;
@@ -315,6 +271,7 @@ int test_print_time_node()
     gettimeofday(&node2.expire_time.tv_sec, &node2.expire_time.tv_usec);
     node2.next_node = NULL;
     print_time_node(&node1);
+    return 0;
 }
 
 int test_update()
@@ -349,6 +306,7 @@ int test_update()
     print_time_node(head);
     printf("\n");
     print_time_node(&node1);
+    return 0;
 }
 
 int test_insert()
@@ -360,6 +318,7 @@ int test_insert()
         t = insert(t, (double)i, i);
     }
     print_time_node(t);
+    return 0;
 }
 
 int test_delect()
@@ -375,7 +334,6 @@ int test_delect()
     printf("*****************\n");
     t = delele(t, 2); //test node not in the first and last
     print_time_node(t);
-
     printf("*****************\n");
     t = delele(t, 0); //test node in the first
     print_time_node(t);
@@ -387,4 +345,5 @@ int test_delect()
     printf("*****************\n");
     t = delele(t, 0); //test node don't exist
     print_time_node(t);
+    return 0;
 }
