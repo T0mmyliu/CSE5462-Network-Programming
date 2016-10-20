@@ -49,6 +49,8 @@ int pipefd_from_timer[2];
 time_record record_buf[30];
 int record_index;
 int debug = 0;
+char tmp_save[1000];
+int save_size;
 
 void print_test(char *message, int size);
 unsigned short crc16(char *data_p, int length);
@@ -151,6 +153,11 @@ int main(int argc, char *argv[])
 
         while (1)
         {
+            struct timeval waitting;
+            waitting.tv_sec = 0;
+            waitting.tv_usec = 1000000;
+            select(0, NULL, NULL, NULL, &waitting);
+
             FD_ZERO(&readfds);
             FD_SET(sock_local, &readfds);
             FD_SET(sock_remote, &readfds);
@@ -168,7 +175,7 @@ int main(int argc, char *argv[])
                 //TODO fromtimer
             }
 
-            if (FD_ISSET(sock_local, &readfds))
+            if (FD_ISSET(sock_local, &readfds) && buffer_empty_size(&send_buf) > 0)
             {
                 printf("from local port.\n");
                 TrollHeader head;
@@ -185,8 +192,11 @@ int main(int argc, char *argv[])
                 bytes = buffer_recvfrom(sock_local, &send_buf, 0,
                                         (struct sockaddr *)&local_addr, &len);
                 read_from_buffer(buffer_local, &send_buf, pre_send_index + 1, bytes);
+
                 if (bytes == 0)
+                {
                     continue;
+                }
 
                 if (debug == 1)
                 {
@@ -469,9 +479,26 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
 
     cap = buffer_empty_size(buf);
     if (cap == 0)
+    {
+        printf("CAP IS 0\n");
         return 0;
+    }
 
+    //TODO BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG TO FIXXXXXXXXXXX
     byte = recvfrom(sockfd, tmp_buf, cap, flags, src_addr, addrlen);
+    if (byte < 800)
+    {
+        bzero(tmp_save, 1000);
+        save_size = recvfrom(sockfd, tmp_save, 800-cap, flags, src_addr, addrlen);
+    }
+
+    printf("\n\n\n\n\n\n\n\n");
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
+    printf("\n\n\n\n\n\n\n\n");
+
     if (debug == 1)
     {
         printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
@@ -584,6 +611,8 @@ void update_ack(send_buffer *buf, int ack_byte)
 {
     printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
     printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+    printf("ack_byte is : %d\n", ack_byte);
+
     printf("update_ack, previous ack : %d\n", buf->ack_index);
 
     if (ack_byte == 0)
@@ -609,6 +638,13 @@ void read_from_buffer(char *buf, send_buffer *send_buf, int start, int len)
 {
     if ((start + len) < sizeof(send_buf->buff))
     {
+        printf("\n\n\n\n\n\n\n\n");
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
+        printf("\n\n\n\n\n\n\n\n");
+
         memcpy(buf, &send_buf->buff[start], len);
         return;
     }
@@ -616,6 +652,6 @@ void read_from_buffer(char *buf, send_buffer *send_buf, int start, int len)
     int right_size = sizeof(send_buf->buff) - start;
     int left_size = len - right_size;
     memcpy(buf, &send_buf->buff[start], right_size);
-    memcpy(buf+right_size, &send_buf->buff[0], left_size);
+    memcpy(buf + right_size, &send_buf->buff[0], left_size);
     return;
 }

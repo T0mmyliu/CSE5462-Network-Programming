@@ -42,13 +42,21 @@ ssize_t SEND(int socket, const void *buffer, size_t length, int flags)
     sock_addr.sin_port = htons(LOCAL_PORT);
     sock_addr.sin_addr.s_addr = inet_addr(CLIENT_IP);
     int left = length;
+
     while (1)
     {
+        //sleep(2);
+        struct timeval waitting;
+        waitting.tv_sec = 0;
+        waitting.tv_usec = 1100000;
+        select(0, NULL, NULL, NULL, &waitting);
+
         int byte = sendto(socket, buffer, length, flags, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
         left = left - byte;
         if (left == 0)
             return length;
-        else{
+        else
+        {
             printf("The buffer is full...waiting...\n");
         }
     }

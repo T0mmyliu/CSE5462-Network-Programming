@@ -132,7 +132,6 @@ int main(int argc, char *argv[])
             perror("error writing on stream socket");
             exit(1);
         }
-        sleep(1);
     }
     printf("Finish sending the file.\n");
 
