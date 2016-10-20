@@ -20,6 +20,24 @@ typedef struct TrollHeader
     char body[800];
 } TrollHeader;
 
+typedef struct send_buffer
+{
+    int ack_index;
+    int send_index;
+    int upper_bound;
+    int full;
+    char buff[5000];
+} send_buffer;
+
+typedef struct recv_buffer
+{
+    int ack_index;
+    int send_index;
+    int upper_bound;
+    int full;
+    char buff[5000];
+} recv_buffer;
+
 typedef struct time_record
 {
     struct timeval start_time;
@@ -30,7 +48,7 @@ int pipefd[2];
 int pipefd_from_timer[2];
 time_record record_buf[30];
 int record_index;
-int debug = 0;
+int debug = 1;
 
 void print_test(char *message, int size);
 unsigned short crc16(char *data_p, int length);
@@ -38,6 +56,10 @@ int random_ini_seq();
 double update_RTO(double RTT);
 void record(int seq);
 double get_rtt(int ack);
+int buffer_empty_size(send_buffer *buf);
+ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
+                        struct sockaddr *src_addr, socklen_t *addrlen);
+void update_ack(send_buffer *buf, int ack_byte);
 
 int main(int argc, char *argv[])
 {
@@ -121,6 +143,11 @@ int main(int argc, char *argv[])
     }
     else
     {
+        send_buffer send_buf;
+        send_buf.upper_bound = 4999;
+        send_buf.ack_index = -1;
+        send_buf.send_index = -1;
+
         while (1)
         {
             sleep(1);
@@ -153,8 +180,8 @@ int main(int argc, char *argv[])
 
                 int bytes;
                 socklen_t len = sizeof(local_addr);
-                bytes = recvfrom(sock_local, buffer_local, sizeof(buffer_local), 0,
-                                 (struct sockaddr *)&local_addr, &len);
+                bytes = buffer_recvfrom(sock_local, &send_buf, 0,
+                                        (struct sockaddr *)&local_addr, &len);
                 if (bytes < 0)
                 {
                     perror("Receing datagram from ftpc.");
@@ -248,7 +275,8 @@ int main(int argc, char *argv[])
                     //send ack back to client
                     TrollHeader ack_packet;
                     ack_packet.tcp_header.ack = 1;
-                    ack_packet.tcp_header.ack_seq = rec_head.tcp_header.seq;
+                    ack_packet.tcp_header.seq = rec_head.tcp_header.seq;
+                    ack_packet.tcp_header.ack_seq = ack_packet.tcp_header.seq + bytes;
                     bytes = sendto(sock_remote, (char *)(&ack_packet), sizeof(ack_packet), 0,
                                    (struct sockaddr *)&client_addr, sizeof(client_addr));
 
@@ -260,7 +288,9 @@ int main(int argc, char *argv[])
                     printf("client: recv from server, ack packet.\n");
                     double rtt = 0;
                     //first calculate the time intercal
-                    rtt = get_rtt(rec_head.tcp_header.ack_seq);
+                    rtt = get_rtt(rec_head.tcp_header.seq);
+                    int ack_byte = rec_head.tcp_header.ack_seq - rec_head.tcp_header.seq;
+                    update_ack(&send_buf, ack_byte);
                     //second update the RTO time
                     double next_rto = update_RTO(rtt);
 
@@ -273,7 +303,7 @@ int main(int argc, char *argv[])
                     RTO = next_rto;
 
                     //third delete the node from timer
-                    delete_from_timer(rec_head.tcp_header.ack_seq);
+                    delete_from_timer(rec_head.tcp_header.seq);
                 }
             }
         }
@@ -378,8 +408,8 @@ double get_rtt(int ack)
             rtt = (double)(end_time.tv_sec - record_buf[i].start_time.tv_sec) + (end_time.tv_usec - record_buf[i].start_time.tv_usec) / 1000000.0;
             printf("***********************************************\n");
             printf("***********************************************\n");
-            printf("end time: %d, start time %d\n",end_time.tv_sec,record_buf[i].start_time.tv_sec);
-            printf("ack: %d, seq: %d\n",ack,record_buf[i].seq);
+            printf("end time: %ld, start time %ld\n", end_time.tv_sec, record_buf[i].start_time.tv_sec);
+            printf("ack: %d, seq: %d\n", ack, record_buf[i].seq);
             printf("RTT: % f\n", rtt);
             printf("***********************************************\n");
             printf("***********************************************\n");
@@ -387,4 +417,168 @@ double get_rtt(int ack)
     }
 
     return rtt;
+}
+
+int buffer_empty_size(send_buffer *buf)
+{
+    if (buf->full == 1)
+    {
+        return 0;
+    }
+
+    if (buf->send_index == -1)
+    {
+        return 5000;
+    }
+
+    //|***********send_index||...........ack_index||**********|
+    if (buf->send_index < buf->ack_index)
+    {
+        return buf->ack_index - buf->send_index;
+    }
+
+    // |....free......ack_index||******************send_index||.....free......|
+    return (sizeof(buf->buff) - (buf->send_index - buf->ack_index));
+}
+
+ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
+                        struct sockaddr *src_addr, socklen_t *addrlen)
+{
+    char tmp_buf[1000] = {0};
+    int cap;
+    int byte;
+
+    cap = buffer_empty_size(buf);
+
+    byte = recvfrom(sockfd, tmp_buf, cap, flags, src_addr, addrlen);
+    if (debug == 1)
+    {
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        if (byte == 4)
+        {
+            int *len = (int *)&tmp_buf[0];
+            printf("byte recvd: %d , content: int: %d, char %s \n", byte, *len, tmp_buf);
+        }
+        else
+        {
+            printf("byte recvd: %d , content: %s\n", byte, tmp_buf);
+        }
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    }
+
+    //|***********send_index||...........ack_index||**********|
+
+    if (buf->send_index < buf->ack_index)
+    {
+        char *dst = (char *)(&buf->buff[buf->send_index + 1]);
+
+        memcpy(dst, tmp_buf, byte);
+        buf->send_index += byte;
+        if (buf->send_index == buf->ack_index)
+        {
+            buf->full = 1;
+        }
+
+        if (debug == 1)
+        {
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+            printf("mode 1 : %s\n", tmp_buf);
+            printf("ack index: %d\n", buf->ack_index);
+            printf("send index: %d\n", buf->send_index);
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        }
+
+        return byte;
+    }
+
+    // |....free......ack_index||******************send_index||.....free......|
+    int left = byte;
+    if (buf->send_index != buf->upper_bound)
+    {
+        int right_space = buf->upper_bound - buf->send_index;
+        char *dst = (char *)(&buf->buff[buf->send_index + 1]);
+
+        if (right_space >= byte)
+        {
+            memcpy(dst, tmp_buf, byte);
+            buf->send_index += byte;
+
+            if (debug == 1)
+            {
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("mode 2 ,right_space %d : %s\n", right_space, tmp_buf);
+                printf("ack index: %d\n", buf->ack_index);
+                printf("send index: %d\n", buf->send_index);
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+            }
+
+            return byte;
+        }
+
+        else
+        {
+            memcpy(dst, tmp_buf, right_space);
+            buf->send_index = -1;
+
+            char *src = (char *)(&tmp_buf[right_space]);
+            left = byte - right_space;
+            dst = (char *)(&buf->buff[0]);
+            memcpy(dst, src, left);
+            buf->send_index += left;
+            if (buf->send_index == buf->ack_index)
+            {
+                buf->full = 1;
+            }
+
+            if (debug == 1)
+            {
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("%s\n", tmp_buf);
+                printf("ack index: %d\n", buf->ack_index);
+                printf("send index: %d\n", buf->send_index);
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+            }
+
+            return byte;
+        }
+    }
+}
+
+void update_ack(send_buffer *buf, int ack_byte)
+{
+    if (debug == 1)
+    {
+        printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+        printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+        printf("update_ack, previous ack : %d\n", buf->ack_index);
+    }
+
+    if (ack_byte == 0)
+    {
+        return;
+    }
+
+    if (buf->full == 1)
+    {
+        buf->full = 0;
+    }
+
+    buf->ack_index = (buf->ack_index + ack_byte) % (sizeof(buf->buff));
+
+    if (debug == 1)
+    {
+        printf("update_ack, new ack : %d\n", buf->ack_index);
+        printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+        printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+    }
+
+    return;
 }
