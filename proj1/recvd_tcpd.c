@@ -48,7 +48,7 @@ int pipefd[2];
 int pipefd_from_timer[2];
 time_record record_buf[30];
 int record_index;
-int debug = 0;
+int debug = 1;
 
 void print_test(char *message, int size);
 unsigned short crc16(char *data_p, int length);
