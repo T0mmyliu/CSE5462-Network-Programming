@@ -486,11 +486,11 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
 
     //TODO BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG TO FIXXXXXXXXXXX
     byte = recvfrom(sockfd, tmp_buf, cap, flags, src_addr, addrlen);
-    if (byte < 800)
-    {
-        bzero(tmp_save, 1000);
-        save_size = recvfrom(sockfd, tmp_save, 800-cap, flags, src_addr, addrlen);
-    }
+    //if (byte < 800)
+    //{
+    //    bzero(tmp_save, 1000);
+    //    save_size = recvfrom(sockfd, tmp_save, 800-cap, flags, src_addr, addrlen);
+    //}
 
     printf("\n\n\n\n\n\n\n\n");
     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
