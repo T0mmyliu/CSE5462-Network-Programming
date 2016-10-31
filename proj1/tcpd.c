@@ -380,13 +380,9 @@ double get_rtt(int ack)
         if (ack == record_buf[i].seq)
         {
             rtt = (double)(end_time.tv_sec - record_buf[i].start_time.tv_sec) + (end_time.tv_usec - record_buf[i].start_time.tv_usec) / 1000000.0;
-            printf("***********************************************\n");
-            printf("***********************************************\n");
             printf("end time: %ld, start time %ld\n", end_time.tv_sec, record_buf[i].start_time.tv_sec);
             printf("ack: %d, seq: %d\n", ack, record_buf[i].seq);
             printf("RTT: % f\n", rtt);
-            printf("***********************************************\n");
-            printf("***********************************************\n");
         }
     }
 
@@ -429,25 +425,12 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
         return 0;
     }
 
-    //TODO BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG TO FIXXXXXXXXXXX
     byte = recvfrom(sockfd, tmp_buf, cap, flags, src_addr, addrlen);
-    //if (byte < 800)
-    //{
-    //    bzero(tmp_save, 1000);
-    //    save_size = recvfrom(sockfd, tmp_save, 800-cap, flags, src_addr, addrlen);
-    //}
 
-    printf("\n\n\n\n\n\n\n\n");
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!bytebytebytebyte:%d\n", byte);
-    printf("\n\n\n\n\n\n\n\n");
+    printf("bytebytebytebyte:%d\n", byte);
 
     if (debug == 1)
     {
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         if (byte == 4)
         {
             int *len = (int *)&tmp_buf[0];
@@ -457,8 +440,6 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
         {
             printf("byte recvd: %d , content: %s\n", byte, tmp_buf);
         }
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     }
 
     //|***********send_index||...........ack_index||**********|
@@ -476,13 +457,9 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
 
         if (debug == 1)
         {
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
             printf("mode 1 : %s\n", tmp_buf);
             printf("ack index: %d\n", buf->ack_index);
             printf("send index: %d\n", buf->send_index);
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         }
 
         return byte;
@@ -501,8 +478,6 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
 
             if (debug == 1)
             {
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
                 if (buf->send_index == -1)
                 {
                     printf("mode 2 ,right_space %d\ncontent : %d\n", right_space, *(int *)(&buf->buff[buf->send_index + 1]));
@@ -513,8 +488,6 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
                 }
                 printf("ack index: %d\n", buf->ack_index);
                 printf("send index: %d\n", buf->send_index);
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
             }
             buf->send_index += byte;
 
@@ -538,13 +511,9 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
 
             if (debug == 1)
             {
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
                 printf("%s\n", tmp_buf);
                 printf("ack index: %d\n", buf->ack_index);
                 printf("send index: %d\n", buf->send_index);
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
             }
 
             return byte;
@@ -554,8 +523,6 @@ ssize_t buffer_recvfrom(int sockfd, send_buffer *buf, int flags,
 
 void update_ack(send_buffer *buf, int ack_byte)
 {
-    printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-    printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
     printf("ack_byte is : %d\n", ack_byte);
 
     printf("update_ack, previous ack : %d\n", buf->ack_index);
@@ -573,8 +540,6 @@ void update_ack(send_buffer *buf, int ack_byte)
     buf->ack_index = (buf->ack_index + ack_byte) % (sizeof(buf->buff));
 
     printf("update_ack, new ack : %d\n", buf->ack_index);
-    printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-    printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
 
     return;
 }
@@ -583,12 +548,7 @@ void read_from_buffer(char *buf, send_buffer *send_buf, int start, int len)
 {
     if ((start + len) < sizeof(send_buf->buff))
     {
-        printf("\n\n\n\n\n\n\n\n");
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
-        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!read_from_buffer:%d\n", len);
-        printf("\n\n\n\n\n\n\n\n");
+        printf("read_from_buffer:%d\n", len);
 
         memcpy(buf, &send_buf->buff[start], len);
         return;
