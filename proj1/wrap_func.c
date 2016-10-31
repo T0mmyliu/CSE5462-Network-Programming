@@ -39,7 +39,7 @@ ssize_t SEND(int socket, const void *buffer, size_t length, int flags)
     //usleep(200000);
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;
-    sock_addr.sin_port = htons(LOCAL_PORT);
+    sock_addr.sin_port = htons(LOCAL_PORT_CLIENT);
     sock_addr.sin_addr.s_addr = inet_addr(CLIENT_IP);
     int left = length;
 

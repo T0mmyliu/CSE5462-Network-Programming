@@ -12,6 +12,7 @@
 #include "address.h"
 
 #define POLY 0x8408
+#define WINDOW_SIZE 10
 
 typedef struct TrollHeader
 {
@@ -28,6 +29,20 @@ typedef struct send_buffer
     int full;
     char buff[5000];
 } send_buffer;
+
+typedef struct packet
+{
+    char buffer[1000];
+} packet;
+
+typedef struct my_window
+{
+    int last_ack;
+    int last_send;
+    int num_empty;
+    packet packets[WINDOW_SIZE];
+    int ack_bitmap[WINDOW_SIZE];
+}my_window;
 
 typedef struct recv_buffer
 {
@@ -59,3 +74,5 @@ void address_init();
 void socket_init();
 void socket_bind();
 void pipe_init();
+void window_init(my_window* window);
+int window_empty(my_window* window);

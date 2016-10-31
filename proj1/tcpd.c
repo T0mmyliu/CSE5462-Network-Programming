@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     int cpid = 0;
     struct timeval waitting;
     int bytes;
+    my_window window_client;
 
     if (argc != 1)
     {
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
     socket_init();
     socket_bind();
     pipe_init();
+    window_init(&window_client);
 
     //create a new process, start the timer
 
@@ -220,6 +222,21 @@ int main(int argc, char *argv[])
         }
     }
     return 0;
+}
+
+int window_empty(my_window *window)
+{
+    if (window->num_empty == 0)
+        return 1;
+    return 0;
+}
+
+void window_init(my_window *window)
+{
+    bzero(window, sizeof(window));
+    window->last_ack = -1;
+    window->last_send = -1;
+    window->num_empty = WINDOW_SIZE;
 }
 
 void address_init()
