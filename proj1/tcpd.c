@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
     char tmp_save[1000];
     int save_size;
     int cpid = 0;
+    struct timeval waitting;
+    int bytes;
 
     if (argc != 1)
     {
@@ -59,19 +61,15 @@ int main(int argc, char *argv[])
 
         while (1)
         {
-            struct timeval waitting;
-            waitting.tv_sec = 0;
-            waitting.tv_usec = 1000000;
-            select(0, NULL, NULL, NULL, &waitting);
-
             FD_ZERO(&readfds);
             FD_SET(sock_client_local, &readfds);
             FD_SET(sock_server_remote, &readfds);
             FD_SET(pipefd_from_timer[0], &readfds);
 
-            //printf("waiting for a packet.\n");
+            waitting.tv_sec = 0;
+            waitting.tv_usec = 1000;
 
-            if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL))
+            if (select(FD_SETSIZE, &readfds, NULL, NULL, &waitting))
             {
             }
 
@@ -89,9 +87,8 @@ int main(int argc, char *argv[])
 
                 head.send_to.sin_family = htons(AF_INET);
                 head.send_to.sin_addr.s_addr = inet_addr(SERVER_IP);
-                head.send_to.sin_port = htons(REMOTE_PORT);
+                head.send_to.sin_port = htons(REMOTE_PORT_SERVER);
 
-                int bytes;
                 socklen_t len = sizeof(from_client_ftp);
 
                 int pre_send_index = send_buf.send_index;
@@ -106,11 +103,7 @@ int main(int argc, char *argv[])
 
                 if (debug == 1)
                 {
-                    printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-                    printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
                     printf("in buffer %s\n", buffer_local);
-                    printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-                    printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
                 }
 
                 if (bytes < 0)
@@ -135,13 +128,7 @@ int main(int argc, char *argv[])
                 head.tcp_header.ack = 0;
                 if (debug == 1)
                 {
-                    printf("\n");
-                    printf("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n");
-                    printf("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n");
                     printf("%s\n", head.body);
-                    printf("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n");
-                    printf("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n");
-                    printf("\n");
                 }
                 sendto(sock_server_remote, (char *)&head, sizeof(head.send_to) + sizeof(head.tcp_header) + bytes, 0,
                        (struct sockaddr *)&to_client_troll, sizeof(to_client_troll));
@@ -169,13 +156,7 @@ int main(int argc, char *argv[])
 
                 if (debug == 1)
                 {
-                    printf("\n");
-                    printf("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss\n");
-                    printf("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss\n");
                     printf("%s\n", rec_head.body);
-                    printf("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss\n");
-                    printf("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss\n");
-                    printf("\n");
                 }
 
                 if (rec_head.tcp_header.ack == 0)
@@ -189,11 +170,11 @@ int main(int argc, char *argv[])
 
                     if (crc_recv == crc_send)
                     {
-                        //printf("Pass the crc16 checksum test.\n");
+                        printf("Pass the crc16 checksum test.\n");
                     }
                     else
                     {
-                        //printf("Fail to pass the crc16 checksum test. Send crc16 is %#4x, Recv crc16 is %#4x\n", crc_send, crc_recv);
+                        printf("Fail to pass the crc16 checksum test. Send crc16 is %#4x, Recv crc16 is %#4x\n", crc_send, crc_recv);
                     }
 
                     if (bytes < 0)
@@ -228,12 +209,7 @@ int main(int argc, char *argv[])
                     update_ack(&send_buf, ack_byte);
                     //second update the RTO time
                     double next_rto = update_RTO(rtt);
-
-                    printf("***********************************************\n");
-                    printf("***********************************************\n");
                     printf("previous rto : %f, next rto : %f\n", RTO, next_rto);
-                    printf("***********************************************\n");
-                    printf("***********************************************\n");
 
                     RTO = next_rto;
 
@@ -243,7 +219,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-
     return 0;
 }
 
@@ -256,15 +231,15 @@ void address_init()
     bzero(&to_server_tcpd, sizeof(to_server_tcpd));
 
     from_client_ftp.sin_family = AF_INET;
-    from_client_ftp.sin_port = htons(LOCAL_PORT);
+    from_client_ftp.sin_port = htons(LOCAL_PORT_CLIENT);
     from_client_ftp.sin_addr.s_addr = INADDR_ANY;
 
     from_client_troll.sin_family = AF_INET;
-    from_client_troll.sin_port = htons(REMOTE_PORT);
+    from_client_troll.sin_port = htons(REMOTE_PORT_SERVER);
     from_client_troll.sin_addr.s_addr = INADDR_ANY;
 
     to_client_troll.sin_family = AF_INET;
-    to_client_troll.sin_port = htons(TROLL_PORT);
+    to_client_troll.sin_port = htons(TROLL_PORT_CLIENT);
     to_client_troll.sin_addr.s_addr = inet_addr(CLIENT_IP);
 
     to_server_ftp.sin_family = AF_INET;
@@ -272,7 +247,7 @@ void address_init()
     to_server_ftp.sin_addr.s_addr = inet_addr(SERVER_IP);
 
     to_server_tcpd.sin_family = AF_INET;
-    to_server_tcpd.sin_port = htons(REMOTE_PORT);
+    to_server_tcpd.sin_port = htons(REMOTE_PORT_SERVER);
     to_server_tcpd.sin_addr.s_addr = inet_addr(CLIENT_IP);
 }
 

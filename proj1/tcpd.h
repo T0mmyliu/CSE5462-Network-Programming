@@ -44,7 +44,6 @@ typedef struct time_record
     int seq;
 } time_record;
 
-
 void print_test(char *message, int size);
 unsigned short crc16(char *data_p, int length);
 int random_ini_seq();
