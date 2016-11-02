@@ -30,17 +30,12 @@ typedef struct send_buffer
     char buff[5000];
 } send_buffer;
 
-typedef struct packet
-{
-    char buffer[1000];
-} packet;
-
 typedef struct my_window
 {
     int last_ack;
     int last_send;
     int num_empty;
-    packet packets[WINDOW_SIZE];
+    TrollHeader troll_headers[WINDOW_SIZE];
     int ack_bitmap[WINDOW_SIZE];
 }my_window;
 
@@ -75,4 +70,9 @@ void socket_init();
 void socket_bind();
 void pipe_init();
 void window_init(my_window* window);
-int window_empty(my_window* window);
+int window_full(my_window* window);
+void generate_TrollHeader(TrollHeader *head, char *buffer, int size);
+void block_sending_and_save();
+void save_packet(my_window* window,TrollHeader* head);
+void print_window(my_window *window);
+void send_recv_to_ftpc();

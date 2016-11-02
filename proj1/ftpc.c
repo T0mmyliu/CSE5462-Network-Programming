@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
         perror("error writing on stream socket");
         exit(1);
     }
-    printf("The sended bytes is %d.\nClient sends the file len: %d\n", send_bytes, finfo.len);
+    printf("The sended bytes is %d.\nClient sends the file len: %d\n\n", send_bytes, finfo.len);
 
     if (SEND(sock, finfo.file_name, 25, 0) < 0)
     {

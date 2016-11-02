@@ -20,5 +20,5 @@ wrap_func.o: wrap_func.c
 	$(CC) $(CFLAGS) wrap_func.c
 	
 clean:
-	rm *o ftpc ftps tcpd recvd* 
+	rm *.o ftpc ftps tcpd recvd* 
 

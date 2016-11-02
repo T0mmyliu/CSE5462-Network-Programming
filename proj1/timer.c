@@ -2,7 +2,7 @@
 
 extern int pipefd[2];
 extern int pipefd_from_timer[2];
-
+static int debug = 0;
 int timer_process_start()
 {
     printf("start timer process.\n");
@@ -130,9 +130,7 @@ struct timeval get_current_time()
 
 void send_to_timer(int RTO, int seq)
 {
-    printf("\n");
     start_timer(pipefd[1], RTO, seq);
-    printf("\n");
 
     return;
 }
@@ -150,7 +148,10 @@ void start_timer(int fd, double expire_time, int id)
 
 void delete_from_timer(int seq)
 {
-    printf("ack: %d \n",seq);
+    if (debug == 1)
+    {
+        printf("ack: %d \n", seq);
+    }
     cancel_timer(pipefd[1], seq);
     return;
 }
@@ -225,8 +226,10 @@ time_node *delele(time_node *head, int id)
 
         p = p->next_node;
     }
-
-    printf("Didnot find the id:  %d, delect Fail.\n",id);
+    if (debug == 1)
+    {
+        printf("Didnot find the id:  %d, delect Fail.\n", id);
+    }
     return prenode.next_node;
 }
 
@@ -302,9 +305,17 @@ int test_update()
     node4.expire_time.tv_sec = node4.expire_time.tv_sec + 2;
 
     head = update(&node1);
-    printf("\n");
+    if (debug == 1)
+    {
+
+        printf("\n");
+    }
     print_time_node(head);
-    printf("\n");
+    if (debug == 1)
+    {
+
+        printf("\n");
+    }
     print_time_node(&node1);
     return 0;
 }
@@ -331,18 +342,29 @@ int test_delect()
     }
     print_time_node(t);
 
-    printf("*****************\n");
+    if (debug == 1)
+    {
+        printf("*****************\n");
+    }
     t = delele(t, 2); //test node not in the first and last
     print_time_node(t);
-    printf("*****************\n");
+    if (debug == 1)
+    {
+        printf("*****************\n");
+    }
     t = delele(t, 0); //test node in the first
     print_time_node(t);
 
-    printf("*****************\n");
+    if (debug == 1)
+    {
+        printf("*****************\n");
+    }
     t = delele(t, 6); //test node in the last
     print_time_node(t);
-
-    printf("*****************\n");
+    if (debug == 1)
+    {
+        printf("*****************\n");
+    }
     t = delele(t, 0); //test node don't exist
     print_time_node(t);
     return 0;
