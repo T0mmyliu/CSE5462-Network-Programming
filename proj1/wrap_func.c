@@ -76,25 +76,25 @@ ssize_t SEND(int sock, const void *buffer, size_t length, int flags)
         select(FD_SETSIZE, &readfds, NULL, NULL, NULL);
 
         printf("receive a signal from tcpd\n");
-        char buffer[10] = {0};
+        char commad_buffer[10] = {0};
         socklen_t addrlen = sizeof(addr_block_sig);
-        recvfrom(socket_block_sig, buffer, sizeof(buffer), 0,
+        recvfrom(socket_block_sig, commad_buffer, sizeof(buffer), 0,
                  (struct sockaddr *)&addr_block_sig, &addrlen);
 
-        if (strcmp(buffer, "block") == 0)
+        if (strcmp(commad_buffer, "block") == 0)
         {
             printf("The tcpd window is full, blocking....\n");
             blocking = 1;
         }
 
-        else if (strcmp(buffer, "unblock") == 0)
+        else if (strcmp(commad_buffer, "unblock") == 0)
         {
             printf("The tcpd window has empty space, unblock!\n");
             left = left - byte;
             blocking = 0;
         }
 
-        else if (strcmp(buffer, "receved") == 0)
+        else if (strcmp(commad_buffer, "received") == 0)
         {
             printf("The tcpd receved the packet!\n");
             left = left - byte;
@@ -102,7 +102,7 @@ ssize_t SEND(int sock, const void *buffer, size_t length, int flags)
 
         else
         {
-            printf("Receve unknown command from tcpd, the command is : %s....\n", buffer);
+            printf("Receve unknown command from tcpd, the command is : %s....\n", commad_buffer);
         }
 
         if (left == 0)

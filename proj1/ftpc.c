@@ -125,6 +125,8 @@ int main(int argc, char *argv[])
         {
             perror("error reading the file");
         }
+        printf("left_len: %d, read_len: %d", left_len, read_len);
+
         left_len -= read_len;
 
         if (SEND(sock, read_buf, read_len, 0) < 0)

@@ -37,7 +37,7 @@ typedef struct my_window
     int num_empty;
     TrollHeader troll_headers[WINDOW_SIZE];
     int ack_bitmap[WINDOW_SIZE];
-}my_window;
+} my_window;
 
 typedef struct recv_buffer
 {
@@ -69,10 +69,11 @@ void address_init();
 void socket_init();
 void socket_bind();
 void pipe_init();
-void window_init(my_window* window);
-int window_full(my_window* window);
+void window_init(my_window *window);
+int window_full(my_window *window);
 void generate_TrollHeader(TrollHeader *head, char *buffer, int size);
 void block_sending_and_save();
-void save_packet(my_window* window,TrollHeader* head);
+void save_packet(my_window *window, TrollHeader *head);
 void print_window(my_window *window);
 void send_recv_to_ftpc();
+int check_crc(int crc_send, int crc_recv);
