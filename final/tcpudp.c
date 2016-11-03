@@ -241,7 +241,7 @@ int CONNECT(int sockfd, const struct sockaddr *addr, socklen_t addrlen){
     return ret;
 }
 ssize_t SEND(int sockfd, const void *buffer, size_t len, int flags){
-    g_info("SEND sockfd:%d, len:%zu, flags:%d\n",sockfd,len,flags);
+    g_info("SEND sockfd:%d, len:%zu\n",sockfd,len);
     struct sockaddr_in server_addr;
     socklen_t server_addr_len;
     ssize_t ret;
@@ -283,7 +283,7 @@ ssize_t SEND(int sockfd, const void *buffer, size_t len, int flags){
     }
     bcopy(buf,(char *)&ret,sizeof(ssize_t));
 
-    g_info("SEND return: %zd\n",ret);
+    //g_info("SEND return: %zd\n",ret);
     return ret;
 }
 
