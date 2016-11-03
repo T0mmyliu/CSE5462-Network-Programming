@@ -1,10 +1,3 @@
-/*
-CSE 5462 project 1
-Nathan Turner 200229714
-timer process
-Usage: ./timer
-*/
-
 #include "stdafx.h"
 
 struct TimerNodeStruct{

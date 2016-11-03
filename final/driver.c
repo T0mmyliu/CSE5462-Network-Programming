@@ -1,10 +1,3 @@
-/*
-CSE 5462 project 1
-Nathan Turner 200229714
-driver process
-Usage: ./driver
-*/
-
 #include "stdafx.h"
 
 char TimerPort[8]=TIMER_PORT;
