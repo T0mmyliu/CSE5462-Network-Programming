@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
             //look for expired timers
             if (FD_ISSET(sock_timer_driver, &sock_fd))
             {
-                //g_debug("Receiving timer expired request");
+                g_debug("[TIMEOUT]: Receiving timer expired request");
                 recv_timer();
             }
         }
@@ -175,7 +175,7 @@ ERRCODE recv_data(struct binded_sock *binded_sock_fd)
         struct TrollMessageStruct *TmpTrollMessage = (struct TrollMessageStruct *)(l->data);
         if (TmpTrollMessage->SeqNum == NowTrollMessage->SeqNum)
         {
-            ////g_info("[DUPLICATED] Received duplicated package");
+            g_info("[DUPLICATED] Received duplicated package, discard seq %d",TmpTrollMessage->SeqNum);
             RequireValid = FALSE;
             break;
         }
@@ -320,7 +320,7 @@ ERRCODE recv_timer()
         {
             NowConnectedSocket->Packages = g_list_remove_link(NowConnectedSocket->Packages, l);
             NowConnectedSocket->PendingPackages = g_list_append(NowConnectedSocket->PendingPackages, TmpTrollMessage);
-            ////g_info("Package SeqNum %u goint to resend. (Session %u)", TmpTrollMessage->SeqNum, TmpTrollMessage->Session);
+            g_info("Packet NUM %u goint to resend. ", TmpTrollMessage->SeqNum);
             break;
         }
     }
@@ -491,8 +491,8 @@ ERRCODE handle_send_all_back()
             EstimatedRTT = .875 * EstimatedRTTprev + (1 - .875) * ElapsedSeconds;
             EstimatedDEV = (1 - .25) * EstimatedDEVprev + .25 * abs(ElapsedSeconds - EstimatedRTTprev);
             EstimatedRTO = EstimatedRTTprev + 4 * EstimatedDEVprev;
-            ////g_info("\n\n\nRTT %6f seconds", EstimatedRTT);
-            ////g_info("RTO %6f seconds", EstimatedRTO);
+            g_info("\n\n\nRTT %6f seconds", EstimatedRTT);
+            g_info("RTO %6f seconds", EstimatedRTO);
             EstimatedDEVprev = EstimatedDEV;
             EstimatedRTTprev = EstimatedRTT;
 
