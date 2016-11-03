@@ -320,7 +320,7 @@ ERRCODE recv_timer()
         {
             NowConnectedSocket->Packages = g_list_remove_link(NowConnectedSocket->Packages, l);
             NowConnectedSocket->PendingPackages = g_list_append(NowConnectedSocket->PendingPackages, TmpTrollMessage);
-            g_info("Packet NUM %d goint to resend. ", TmpTrollMessage->SeqNum);
+            g_info("Packet NUM  goint to resend.");
             break;
         }
     }
