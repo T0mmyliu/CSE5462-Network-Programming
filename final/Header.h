@@ -20,13 +20,13 @@
 
 #include <glib.h>
 
-#define SERVER_PUBLIC_PORT "10000"
-#define SERVER_TCPD_PORT "10001"
+#define SERVER_PUBLIC_PORT "8000"
+#define SERVER_TCPD_PORT "8001"
 
-#define CLIENT_PUBLIC_PORT "20000"
-#define CLIENT_TCPD_PORT "20001"
+#define CLIENT_PUBLIC_PORT "8100"
+#define CLIENT_TCPD_PORT "8101"
 
-#define TIMER_PORT "50000"
+#define TIMER_PORT "8080"
 
 #define TCPD_MSG_LEN 8
 #define BUF_LEN 1000
@@ -43,7 +43,7 @@
 #define __WITH_TROLL
 
 #ifdef __WITH_TROLL
-#define TROLL_PORT "30000"
+#define TROLL_PORT "8081"
 #include "Troll/troll.h"
 /* the wrap of troll message */
 struct TrollMessageStruct{
