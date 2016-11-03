@@ -30,7 +30,7 @@ int main()
         perror("error openning datagram socket");
         exit(1);
     }
-    //g_info("Constructed timer socket with fd %d",TimerSocket);
+    g_info("Constructed timer socket with fd %d",TimerSocket);
     //g_debug("Binding timer socket to port %s ...",TimerPort);
     struct sockaddr_in TimerAddr;
     TimerAddr.sin_family = AF_INET;
@@ -40,7 +40,7 @@ int main()
         perror("error binding stream socket");
         exit(1);
     }
-    //g_info("Binded timer socket to port %s",TimerPort);
+    g_info("Binded timer socket to port %s",TimerPort);
     //g_debug("Entering main loop ...");
     fd_set TimerSocketSet;
     struct timeval SleepTime;
@@ -76,7 +76,7 @@ int main()
                 socklen_t RequestAddrLength=sizeof(RequestAddr);
                 //g_debug("Fetching request ...");
                 recvfrom(TimerSocket,(void *)&NowRequest,sizeof(NowRequest),MSG_WAITALL,(struct sockaddr *)RequestAddr,&RequestAddrLength);
-                //g_info("Request fetched Type:%d SeqNum:%d, Seconds:%0.2lf",NowRequest.Type,NowRequest.SeqNum,NowRequest.Seconds);
+                g_info("Request fetched Type:%d SeqNum:%d, Seconds:%0.2lf",NowRequest.Type,NowRequest.SeqNum,NowRequest.Seconds);
 		//see if request was to add or remove node
                 switch(NowRequest.Type){
                     case TimerRequestStart:{
@@ -103,7 +103,7 @@ int main()
 //insert timer node
 ERRCODE InsertRequest(const struct TimerRequestStruct * NowRequest, struct sockaddr *RequestAddr){
     //g_debug("Call Insert Request ...");
-    //g_assert(NowRequest);
+    g_assert(NowRequest);
     //g_debug("Constructing node for request %d ...",NowRequest==NULL?-1:NowRequest->SeqNum);
     struct TimerNodeStruct *NowNode=(struct TimerNodeStruct *)malloc(sizeof(struct TimerNodeStruct));
     NowNode->Session=NowRequest->Session;
@@ -130,7 +130,7 @@ ERRCODE InsertRequest(const struct TimerRequestStruct * NowRequest, struct socka
     }
     //g_debug("Inserting SeqNum %d ...",NowNode->SeqNum);
     TimerList=g_list_insert_before(TimerList,l,NowNode);
-    //g_info("Inserted %d before %d",NowNode->SeqNum,l==NULL?-1:((struct TimerNodeStruct *)(l->data))->SeqNum);
+    g_info("Inserted %d before %d",NowNode->SeqNum,l==NULL?-1:((struct TimerNodeStruct *)(l->data))->SeqNum);
     //g_debug("Updating SeqNum %d ...",l==NULL?-1:((struct TimerNodeStruct *)(l->data))->SeqNum);
     if(l!=NULL){
         ((struct TimerNodeStruct *)(l->data))->RemainSeconds-=NowNode->RemainSeconds;
@@ -163,7 +163,7 @@ ERRCODE CancelRequest(const struct TimerRequestStruct * NowRequest){
     }
     //g_debug("Deleting SeqNum %d ...",l==NULL?-1:((struct TimerNodeStruct *)(l->data))->SeqNum);
     TimerList=g_list_delete_link(TimerList,l);
-    //g_info("Deleted SeqNum %d ...",NowRequest->SeqNum);
+    g_info("Deleted SeqNum %d ...",NowRequest->SeqNum);
     //g_debug("Cancel Request done.");
     //g_message("Timer request canceled. SeqNum:%d, (Session:%d)",NowRequest->SeqNum,NowRequest->Session);
     return 0;
@@ -172,13 +172,13 @@ ERRCODE CancelRequest(const struct TimerRequestStruct * NowRequest){
 //update list with past time
 ERRCODE UpdateTimerList(){
     //g_debug("Call Update Timer List ...");
-    //g_assert(LastSystemTime.tv_sec!=0);
+    g_assert(LastSystemTime.tv_sec!=0);
     //g_debug("Calculating elapsed time ...");
     struct timeval NowSystemTime;
     gettimeofday(&NowSystemTime,NULL);
     double ElapsedSeconds=(double)(NowSystemTime.tv_sec-LastSystemTime.tv_sec) +USEC2SEC*NowSystemTime.tv_usec-USEC2SEC*LastSystemTime.tv_usec;
     LastSystemTime=NowSystemTime;
-    //g_info("Elapsed %lf seconds",ElapsedSeconds);
+    g_info("Elapsed %lf seconds",ElapsedSeconds);
     //g_debug("Update first timer node ...");
     if(TimerList!=NULL){
         GList *TimerFirst=g_list_first(TimerList);
@@ -194,7 +194,7 @@ ERRCODE UpdateTimerList(){
             ((struct TimerNodeStruct *)(l->next->data))->RemainSeconds+=((struct TimerNodeStruct *)(l->data))->RemainSeconds;
         }
         ((struct TimerNodeStruct *)(l->data))->RemainSeconds=0;
-        //g_info("SeqNum %d expired",((struct TimerNodeStruct *)(l->data))->SeqNum);
+        g_info("SeqNum %d expired",((struct TimerNodeStruct *)(l->data))->SeqNum);
         l=l->next;
     }
     //g_debug("Update Timer List done.");
@@ -222,7 +222,7 @@ ERRCODE SendCallbacks(){
         }
         //g_message("Sent callback with SeqNum %d (Session:%d)",NowExpired.SeqNum,NowExpired.Session);
         TimerList=g_list_delete_link(TimerList,TimerFirst);
-        //g_info("Deleted SeqNum %d ...",NowExpired.SeqNum);
+        g_info("Deleted SeqNum %d ...",NowExpired.SeqNum);
     }
     //g_debug("Send Callbacks done.");
     return 0;
@@ -233,7 +233,7 @@ ERRCODE DisplayTimerList(){
     //g_debug("Call Display Timer List ...");
     GList *l=TimerList;
     while(l!=NULL){
-        //g_info("TimerNode SeqNum: %d, RemainSeconds: %0.2lf (Session:%d)", ((struct TimerNodeStruct *)(l->data))->SeqNum, ((struct TimerNodeStruct *)(l->data))->RemainSeconds, ((struct TimerNodeStruct *)(l->data))->Session);
+        g_info("TimerNode SeqNum: %d, RemainSeconds: %0.2lf (Session:%d)", ((struct TimerNodeStruct *)(l->data))->SeqNum, ((struct TimerNodeStruct *)(l->data))->RemainSeconds, ((struct TimerNodeStruct *)(l->data))->Session);
         l=l->next;
     }
     //g_debug("Display Timer List done.");

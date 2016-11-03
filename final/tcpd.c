@@ -175,7 +175,7 @@ ERRCODE recv_data(struct binded_sock *binded_sock_fd)
         struct TrollMessageStruct *TmpTrollMessage = (struct TrollMessageStruct *)(l->data);
         if (TmpTrollMessage->SeqNum == NowTrollMessage->SeqNum)
         {
-            g_info("[DUPLICATED] Received duplicated package, discard seq %d",TmpTrollMessage->SeqNum);
+            g_info("[DUPLICATED] Received duplicated package");
             RequireValid = FALSE;
             break;
         }
@@ -320,7 +320,7 @@ ERRCODE recv_timer()
         {
             NowConnectedSocket->Packages = g_list_remove_link(NowConnectedSocket->Packages, l);
             NowConnectedSocket->PendingPackages = g_list_append(NowConnectedSocket->PendingPackages, TmpTrollMessage);
-            g_info("Packet NUM %u goint to resend. ", TmpTrollMessage->SeqNum);
+            g_info("Packet NUM %d goint to resend. ", TmpTrollMessage->SeqNum);
             break;
         }
     }
