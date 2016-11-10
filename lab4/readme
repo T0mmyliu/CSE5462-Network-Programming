@@ -1,0 +1,23 @@
+1.Download ns3
+Downloading ns-3 Using a Tarball:
+$ wget http://www.nsnam.org/release/ns-allinone-3.26.tar.bz2
+
+Hint: if your C++ compiler not support C++ 11, you can choose 3.24 version
+$ wget http://www.nsnam.org/release/ns-allinone-3.24.tar.bz2
+
+
+2.Install ns3 with waf
+$ ./waf clean
+$ ./waf configure --build-profile=debug --enable-examples --enable-tests
+$ ./waf
+
+3.run the script
+first: move the script to "scratch"
+$ cp examples/tutorial/udpchain.cc scratch/udpchain.cc
+then compile it
+$ ./waf
+and then
+$ ./waf --run scratch/udpchain
+
+4.use tcpdump to see information in nodes
+$ tcpdump -nn -tt -v -K -r file1-0-0.pcap
