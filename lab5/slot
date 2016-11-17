@@ -1,0 +1,3 @@
+set term png
+set output "sixth.png"
+plot "sixth.cwnd" with linespoints, "sixth2.cwnd" with linespoints
