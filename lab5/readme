@@ -1,0 +1,10 @@
+First you should install ns-3, please see readme in lab4.
+
+Run the script:
+./waf --run "scratch/tcpchain 0.00001 1Mbps tcpchain.pcap sixth.cwnd"
+then
+./waf --run "scratch/tcpchain 0.00005 0.1Mbps tcpchain.pcap sixth2.cwnd"
+
+Then plot:
+gnuplot plot
+
