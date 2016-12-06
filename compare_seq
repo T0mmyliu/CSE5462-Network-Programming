@@ -1,0 +1,3 @@
+set terminal png size 640,480
+set output "proj2-part4-seq.png"
+plot "normal.data" using 1:2 title 'TCPNewReno', "normal4.data" using 1:2 title 'TCPFixed'
