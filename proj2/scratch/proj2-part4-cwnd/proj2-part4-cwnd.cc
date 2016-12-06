@@ -11,18 +11,45 @@
 #include "ns3/traced-value.h"
 #include "ns3/trace-source-accessor.h"
 #include "tcp-fixed.h"
+uint32_t ssthresh = 0;
+
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE("TcpBulkSendExample");
 
+static void 
+CwndChange (Ptr<OutputStreamWrapper> stream, uint32_t oldCwnd, uint32_t newCwnd)
+{
+//	if (newCwnd < ssthresh) {
+//		*stream->GetStream () << Simulator::Now ().GetSeconds () << " " << newCwnd <<" "<<0<< std::endl;
+//	} else {
+		*stream->GetStream () << Simulator::Now ().GetSeconds () << " " << newCwnd<<" " <<1<<std::endl;
+//	}
+}
+
+static void 
+SstChange (Ptr<OutputStreamWrapper> stream, uint32_t oldSst, uint32_t newSst)
+{
+  	ssthresh = newSst;
+}
+
+static void
+TraceCwndSst ()
+{
+  AsciiTraceHelper ascii;
+  Ptr<OutputStreamWrapper> stream = ascii.CreateFileStream ("proj2-part4.cwnd");
+
+  Config::ConnectWithoutContext ("/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeBoundCallback (&CwndChange,stream));
+  Config::ConnectWithoutContext ("/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/SlowStartThreshold", MakeBoundCallback (&SstChange,stream));
+}
+
 int
 main(int argc, char *argv[])
 {
-	Config::SetDefault ("ns3::TcpSocket::RcvBufSize", UintegerValue (1 << 22));
-  	Config::SetDefault ("ns3::TcpSocket::SndBufSize", UintegerValue (1 << 22));
-
 	uint32_t maxBytes = 1000000;
 	
+	Config::SetDefault ("ns3::TcpSocket::RcvBufSize", UintegerValue (1 << 22));
+  	Config::SetDefault ("ns3::TcpSocket::SndBufSize", UintegerValue (1 << 22));
 	Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpFixed"));
 
 	NS_LOG_INFO("Create nodes.");
@@ -47,7 +74,9 @@ main(int argc, char *argv[])
 	emBC->SetAttribute ("ErrorRate", DoubleValue (0.00005));
 
 	devicesAB.Get (1)->SetAttribute ("ReceiveErrorModel", PointerValue (emABCD));
-	devicesBC.Get (1)->SetAttribute ("ReceiveErrorModel", PointerValue (emBC));	
+	
+	devicesBC.Get (1)->SetAttribute ("ReceiveErrorModel", PointerValue (emBC));
+	
 	devicesCD.Get (1)->SetAttribute ("ReceiveErrorModel", PointerValue (emABCD));
 
 	InternetStackHelper internet;
@@ -64,22 +93,17 @@ main(int argc, char *argv[])
 
 	NS_LOG_INFO("Create Applications.");
 
-	//
-	// Create a BulkSendApplication and install it on node 0
-	//
-	uint16_t port = 9;  // well-known echo port number
+	uint16_t port = 9;  
+
 
 	BulkSendHelper source("ns3::TcpSocketFactory",
 		InetSocketAddress(sinkinterfaces.GetAddress(1), port));
-	// Set the amount of data to send in bytes.  Zero is unlimited.
 	source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
 	ApplicationContainer sourceApps = source.Install(nodes.Get(0));
 
 	sourceApps.Start(Seconds(0.0));
 	sourceApps.Stop(Seconds(100.0));
-	//
-	// Create a PacketSinkApplication and install it on node 1
-	//
+
 	PacketSinkHelper sink("ns3::TcpSocketFactory",
 		InetSocketAddress(Ipv4Address::GetAny(), port));
 
@@ -87,15 +111,15 @@ main(int argc, char *argv[])
 	sinkApps.Start(Seconds(0.0));
 	sinkApps.Stop(Seconds(100.0));
 
-	// Set up tracing
 	AsciiTraceHelper ascii;
-	pointToPoint.EnableAsciiAll (ascii.CreateFileStream ("proj2-part1.tr"));
-	pointToPoint.EnablePcapAll ("proj2-part1", false);
+	pointToPoint.EnableAsciiAll (ascii.CreateFileStream ("proj2-part4.tr"));
+	pointToPoint.EnablePcapAll ("proj2-part4", false);
+	Simulator::Schedule(Seconds(0.00001),&TraceCwndSst);
       
   	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	  
 	NS_LOG_INFO("Run Simulation.");
-	Simulator::Stop(Seconds(1000.0));
+	Simulator::Stop(Seconds(100.0));
 	Simulator::Run();
 	Simulator::Destroy();
 	NS_LOG_INFO("Done.");
