@@ -20,11 +20,7 @@ NS_LOG_COMPONENT_DEFINE("TcpBulkSendExample");
 static void 
 CwndChange (Ptr<OutputStreamWrapper> stream, uint32_t oldCwnd, uint32_t newCwnd)
 {
-//	if (newCwnd < ssthresh) {
-//		*stream->GetStream () << Simulator::Now ().GetSeconds () << " " << newCwnd <<" "<<0<< std::endl;
-//	} else {
-		*stream->GetStream () << Simulator::Now ().GetSeconds () << " " << newCwnd<<" " <<1<<std::endl;
-//	}
+	*stream->GetStream () << Simulator::Now ().GetSeconds () << " " << newCwnd<<" " <<1<<std::endl;
 }
 
 static void 
