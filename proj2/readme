@@ -1,0 +1,15 @@
+Plot the transmitted sequence number vs. time using gnuplot for TCPNewReno.
+  $ ./part1.sh
+
+Plot cwnd vs. time using gnuplot for TCPNewReno.
+  $ ./part2.sh
+
+Plot sequence number of dynamic routing. 
+  $ ./part3.sh
+
+Plot the cwnd vs. time using gnuplot for TCPNewReno and TcpFixed
+  $ ./part4-cwnd.sh
+
+Plot the transmitted sequence number vs. time using gnuplot for TCPNewReno and TcpFixed
+  $ ./part4-seq.sh
+
